@@ -7,52 +7,38 @@ import { Modal } from './Modal/Modal.jsx';
 import { STATUSES } from '../services-functions/statuses.js';
 import { fetchInfo } from '../services-functions/api.js';
 // import { Component } from 'react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+// import { useRef } from 'react';
+
 
 export const App = () => {
-  // state = {
-  //   pictures: null,
-  //   error: null,
-  //   pageCount: 1,
-  //   status: STATUSES.idle,
-  //   searchWord: '',
-  //   emptyResponse: false,
-  //   modalIsOpen: false,
-  //   modalData: null,
-  // };
-
   const [pictures, setPictures] = useState(null);
-  const [errorio, setErrorio] = useState(null);
+  const [error, setErrorio] = useState(null);
   const [pageCount, setPageCount] = useState(1);
   const [status, setStatus] = useState(STATUSES.idle);
   const [searchWord, setSearchWord] = useState('');
   const [emptyResponse, setEmptyResponse] = useState(false);
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [modalData, setModalData] = useState(null);
+ 
+  console.log(error)
 
   // В мене він порожній, оскільки на початку нічого не відображається.
   // componentDidMount() {}
 
-  const fetchByUser = async () => {
+  const fetchByUser = useCallback(async () => {
     try {
       setStatus(STATUSES.pending);
-      const pictures = await fetchInfo(
-        searchWord,
-        pageCount
-      ); //requestPostByQuery
+      const pictures = await fetchInfo(searchWord, pageCount); //requestPostByQuery
       // console.log(pictures)
 
-
-    
-      setPictures(pictures); // це ще під питанням
-      setStatus(STATUSES.success)
+      setPictures(prevPictures => (prevPictures ? [...prevPictures, ...pictures] : pictures)); // це ще під питанням
+      setStatus(STATUSES.success);
 
       // this.setState(prevState => ({
       //   pictures: [...prevState.pictures, ...pictures],
       //   status: STATUSES.success,
       // }));
-
-
       if (pictures.length < 12) {
         setEmptyResponse(true);
       } else {
@@ -60,32 +46,29 @@ export const App = () => {
       }
     } catch (error) {
       // this.setState({ error: error.message, status: STATUSES.error });
-      setErrorio(errorio.message);
-      setStatus(STATUSES.error)
+      setErrorio(error.message);
+      setStatus(STATUSES.error);
       console.log('errorio');
     }
-  };
+  }, [searchWord, pageCount]);
 
-// Життєвий цикл
-// типу DidUpdate
-useEffect(() => {
-  // if (
-  //   searchWord || pageCount
-  // ) {
-    fetchByUser();
-    //  this.loadMore(prevState.pageCount);
-  // }
-}, [searchWord, pageCount])
+  // Життєвий цикл
+  // типу DidUpdate
+ // const firstRenderRef = useRef(true);
 
-  // componentDidUpdate(prevProps, prevState) {
-  //   if (
-  //     prevState.searchWord !== this.state.searchWord ||
-  //     prevState.pageCount !== this.state.pageCount
-  //   ) {
-  //     this.fetchByUser();
-  //     //  this.loadMore(prevState.pageCount);
+  //метод з вебінару
+  // useEffect(() => {
+  //   if (firstRenderRef.current === false) {
+  //     console.log('false-render');
+  //     fetchByUser();
   //   }
-  // }
+  //   return () => (firstRenderRef.current = false);
+  // }, [fetchByUser, pageCount]);
+
+// Метод ментора
+  useEffect(() => {
+    if (!fetchByUser()) return;
+  }, [fetchByUser, pageCount]);
 
   const onSubmit = formData => {
     // this.setState({searchWord: formData});
@@ -94,26 +77,17 @@ useEffect(() => {
       return alert(`You are viewing  ${formData} right now.`);
     }
 
-    setSearchWord(formData.toLowerCase())
-    setPictures([])
-    setPageCount(1)
-
-    // this.setState({
-    //   searchWord: formData.toLowerCase(),
-    //   pictures: [],
-    //   pageCount: 1,
-    // });
+    setSearchWord(formData.toLowerCase());
+    setPictures([]);
+    setPageCount(1);
   };
 
   const loadMore = () => {
-    // this.setState(prevState => ({ pageCount: prevState.pageCount + 1 }));
-    setPageCount(pageCount +1)
+    setPageCount(pageCount + 1);
   };
 
   const handleShowImageId = imageId => {
-    const selected = pictures.find(
-      picture => picture.id === imageId
-    );
+    const selected = pictures.find(picture => picture.id === imageId);
     // this.setState({ modalIsOpen: true, modalData: selected });
     setModalIsOpen(true);
     setModalData(selected);
@@ -126,41 +100,36 @@ useEffect(() => {
     setModalIsOpen(false);
   };
 
-  
-    return (
-      <div
-        style={{
-          // height: '100vh',
-          maxWidth: '1240px',
-          margin: '0 auto',
-          // alignContent: "center",
-          // alignItems: "center",
-          // justifyContent: "center",
-          display: 'flex',
-          flexDirection: 'column',
-          fontSize: 40,
-          color: '#010101',
-        }}
-      >
-        <Searchbar onSubmit={onSubmit} />
+  return (
+    <div
+      style={{
+        // height: '100vh',
+        maxWidth: '1240px',
+        margin: '0 auto',
+        // alignContent: "center",
+        // alignItems: "center",
+        // justifyContent: "center",
+        display: 'flex',
+        flexDirection: 'column',
+        fontSize: 40,
+        color: '#010101',
+      }}
+    >
+      <Searchbar onSubmit={onSubmit} />
 
-        <ImageGallery
-          picturesQuery={pictures}
-          handleShowImageId={handleShowImageId}
-        />
+      <ImageGallery
+        picturesQuery={pictures}
+        handleShowImageId={handleShowImageId}
+      />
 
-        {status === STATUSES.pending && <Loader />}
+      {status === STATUSES.pending && <Loader />}
 
-        {pictures !== null && emptyResponse === false && (
-          <Button loadMore={loadMore} />
-        )}
-        {modalIsOpen === true && (
-          <Modal
-            modalData={modalData}
-            handleCloseModal={handleCloseModal}
-          />
-        )}
-      </div>
-    );
-  
-}
+      {pictures !== null && emptyResponse === false && (
+        <Button loadMore={loadMore} />
+      )}
+      {modalIsOpen === true && (
+        <Modal modalData={modalData} handleCloseModal={handleCloseModal} />
+      )}
+    </div>
+  );
+};
