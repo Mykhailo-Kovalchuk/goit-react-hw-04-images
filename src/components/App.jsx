@@ -6,108 +6,127 @@ import { Modal } from './Modal/Modal.jsx';
 
 import { STATUSES } from '../services-functions/statuses.js';
 import { fetchInfo } from '../services-functions/api.js';
-import { Component } from 'react';
+// import { Component } from 'react';
+import { useState, useEffect } from 'react';
 
-export class App extends Component {
-  state = {
-    pictures: null,
-    error: null,
-    pageCount: 1,
-    status: STATUSES.idle,
-    searchWord: '',
-    emptyResponse: false,
-    modalIsOpen: false,
-    modalData: null,
-  };
+export const App = () => {
+  // state = {
+  //   pictures: null,
+  //   error: null,
+  //   pageCount: 1,
+  //   status: STATUSES.idle,
+  //   searchWord: '',
+  //   emptyResponse: false,
+  //   modalIsOpen: false,
+  //   modalData: null,
+  // };
 
-  componentDidMount() {}
+  const [pictures, setPictures] = useState(null);
+  const [errorio, setErrorio] = useState(null);
+  const [pageCount, setPageCount] = useState(1);
+  const [status, setStatus] = useState(STATUSES.idle);
+  const [searchWord, setSearchWord] = useState('');
+  const [emptyResponse, setEmptyResponse] = useState(false);
+  const [modalIsOpen, setModalIsOpen] = useState(false);
+  const [modalData, setModalData] = useState(null);
 
-  fetchByUser = async () => {
+  // В мене він порожній, оскільки на початку нічого не відображається.
+  // componentDidMount() {}
+
+  const fetchByUser = async () => {
     try {
-      this.setState({ status: STATUSES.pending });
+      setStatus(STATUSES.pending);
       const pictures = await fetchInfo(
-        this.state.searchWord,
-        this.state.pageCount
+        searchWord,
+        pageCount
       ); //requestPostByQuery
       // console.log(pictures)
 
-      this.setState(prevState => ({
-        pictures: [...prevState.pictures, ...pictures],
-        status: STATUSES.success,
-      }));
+
+    
+      setPictures(pictures); // це ще під питанням
+      setStatus(STATUSES.success)
+
+      // this.setState(prevState => ({
+      //   pictures: [...prevState.pictures, ...pictures],
+      //   status: STATUSES.success,
+      // }));
+
 
       if (pictures.length < 12) {
-        this.setState({ emptyResponse: true });
+        setEmptyResponse(true);
       } else {
-        this.setState({ emptyResponse: false });
+        setEmptyResponse(false);
       }
     } catch (error) {
-      this.setState({ error: error.message, status: STATUSES.error });
+      // this.setState({ error: error.message, status: STATUSES.error });
+      setErrorio(errorio.message);
+      setStatus(STATUSES.error)
       console.log('errorio');
     }
   };
 
-  componentDidUpdate(prevProps, prevState) {
-    if (
-      prevState.searchWord !== this.state.searchWord ||
-      prevState.pageCount !== this.state.pageCount
-    ) {
-      this.fetchByUser();
-      //  this.loadMore(prevState.pageCount);
-    }
-  }
+// Життєвий цикл
+// типу DidUpdate
+useEffect(() => {
+  // if (
+  //   searchWord || pageCount
+  // ) {
+    fetchByUser();
+    //  this.loadMore(prevState.pageCount);
+  // }
+}, [searchWord, pageCount])
 
-  onSubmit = formData => {
+  // componentDidUpdate(prevProps, prevState) {
+  //   if (
+  //     prevState.searchWord !== this.state.searchWord ||
+  //     prevState.pageCount !== this.state.pageCount
+  //   ) {
+  //     this.fetchByUser();
+  //     //  this.loadMore(prevState.pageCount);
+  //   }
+  // }
+
+  const onSubmit = formData => {
     // this.setState({searchWord: formData});
     // this.setState({ pageCount: 1 })
-    if (this.state.searchWord === formData) {
+    if (searchWord === formData) {
       return alert(`You are viewing  ${formData} right now.`);
     }
 
-    this.setState({
-      searchWord: formData.toLowerCase(),
-      pictures: [],
-      pageCount: 1,
-    });
+    setSearchWord(formData.toLowerCase())
+    setPictures([])
+    setPageCount(1)
+
+    // this.setState({
+    //   searchWord: formData.toLowerCase(),
+    //   pictures: [],
+    //   pageCount: 1,
+    // });
   };
 
-  loadMore = () => {
-    this.setState(prevState => ({ pageCount: prevState.pageCount + 1 }));
-
-    // try {
-    //   const nextPage = this.state.pageCount + 1;
-    //   this.setState({ status: STATUSES.pending });
-    //   const picturesLoadMore = await fetchInfo(this.state.searchWord, nextPage); //requestPostByQuery
-    //   // console.log(picturesLoadMore.length)
-
-    //   if (picturesLoadMore.length < 12) {
-    //     this.setState({ emptyResponse: true });
-    //   }
-
-    //   this.setState(prevState => ({
-    //     pictures: [...prevState.pictures, ...picturesLoadMore],
-    //   }));
-
-    //   this.setState({ pageCount: nextPage, status: STATUSES.success });
-    // } catch (error) {
-    //   this.setState({ error: error.message, status: STATUSES.error });
-    //   console.log('errorio');
-    // }
+  const loadMore = () => {
+    // this.setState(prevState => ({ pageCount: prevState.pageCount + 1 }));
+    setPageCount(pageCount +1)
   };
 
-  handleShowImageId = imageId => {
-    const selected = this.state.pictures.find(
+  const handleShowImageId = imageId => {
+    const selected = pictures.find(
       picture => picture.id === imageId
     );
-    this.setState({ modalIsOpen: true, modalData: selected });
+    // this.setState({ modalIsOpen: true, modalData: selected });
+    setModalIsOpen(true);
+    setModalData(selected);
+
     return selected;
   };
 
-  handleCloseModal = () => {
-    this.setState({ modalIsOpen: false });
+  const handleCloseModal = () => {
+    // this.setState({ modalIsOpen: false });
+    setModalIsOpen(false);
   };
 
-  render() {
+  
     return (
       <div
         style={{
@@ -123,25 +142,25 @@ export class App extends Component {
           color: '#010101',
         }}
       >
-        <Searchbar onSubmit={this.onSubmit} />
+        <Searchbar onSubmit={onSubmit} />
 
         <ImageGallery
-          picturesQuery={this.state.pictures}
-          handleShowImageId={this.handleShowImageId}
+          picturesQuery={pictures}
+          handleShowImageId={handleShowImageId}
         />
 
-        {this.state.status === STATUSES.pending && <Loader />}
+        {status === STATUSES.pending && <Loader />}
 
-        {this.state.pictures !== null && this.state.emptyResponse === false && (
-          <Button loadMore={this.loadMore} />
+        {pictures !== null && emptyResponse === false && (
+          <Button loadMore={loadMore} />
         )}
-        {this.state.modalIsOpen === true && (
+        {modalIsOpen === true && (
           <Modal
-            modalData={this.state.modalData}
-            handleCloseModal={this.handleCloseModal}
+            modalData={modalData}
+            handleCloseModal={handleCloseModal}
           />
         )}
       </div>
     );
-  }
+  
 }
