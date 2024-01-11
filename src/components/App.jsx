@@ -30,7 +30,7 @@ export const App = () => {
     try {
       setStatus(STATUSES.pending);
       const pictures = await fetchInfo(searchWord, pageCount); //requestPostByQuery
-      // console.log(pictures)
+      console.log(pictures)
 
       setPictures(prevPictures => (prevPictures ? [...prevPictures, ...pictures] : pictures)); // це ще під питанням
       setStatus(STATUSES.success);
@@ -67,8 +67,13 @@ export const App = () => {
 
 // Метод ментора
   useEffect(() => {
-    if (!fetchByUser()) return;
-  }, [fetchByUser, pageCount]);
+    if (searchWord === "") {
+      return;
+    } 
+      fetchByUser()
+
+   
+  }, [fetchByUser, pageCount, searchWord]);
 
   const onSubmit = formData => {
     // this.setState({searchWord: formData});
